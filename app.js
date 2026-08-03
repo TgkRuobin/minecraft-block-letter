@@ -1,4 +1,4 @@
-import { buildFileNames, createTar, segmentCharacters } from "./core.js";
+import { buildFileNames, segmentCharacters } from "./core.js";
 
 const CANVAS_SIZE = 128;
 const DEFAULT_TEXT_FILE = "./all.txt";
@@ -153,7 +153,7 @@ function buildGrid() {
     card.title = `${character === " " ? "空格" : character} → ${state.fileNames[index]}`;
     canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
-    canvas.setAttribute("aria-label", `${character} 的图片预览`);
+    canvas.setAttribute("aria-label", `${character} 的投影预览`);
     caption.textContent = state.fileNames[index];
     card.append(canvas, caption);
     fragment.append(card);
@@ -166,11 +166,11 @@ function buildGrid() {
   elements.duplicateCount.textContent = `已去重 ${state.duplicateCount} 个`;
   elements.exportButton.disabled = state.characters.length === 0 || state.exporting;
   elements.exportSummaryTitle.textContent = state.characters.length
-    ? `已就绪 · ${state.characters.length} 张图片`
+    ? `已就绪 · ${state.characters.length} 份投影`
     : "等待字符载入";
   elements.exportSummaryDetail.textContent = state.characters.length
-    ? `${state.fontDisplayName} · 每张 128 × 128 PNG`
-    : "每张图片均为 128 × 128 PNG";
+    ? `${state.fontDisplayName} · 128 × 1 × 128 方块`
+    : "每份投影均为单层 128 × 128 区域";
   renderGrid();
 }
 
@@ -243,7 +243,7 @@ async function handleFontUpload(event) {
     state.fontFamily = `"${family}"`;
     state.fontDisplayName = file.name;
     elements.fontFileStatus.textContent = "字体已生效，仅在本机内存中使用";
-    elements.exportSummaryDetail.textContent = `${file.name} · 每张 128 × 128 PNG`;
+    elements.exportSummaryDetail.textContent = `${file.name} · 128 × 1 × 128 方块`;
     renderGrid();
     showToast(`字体已切换为 ${file.name}`);
   } catch (error) {
@@ -279,11 +279,11 @@ function formatTimestamp(date) {
 
 function setExportProgress(current, total) {
   const percentage = total === 0 ? 0 : Math.round((current / total) * 100);
-  elements.exportProgressText.textContent = `正在生成 ${current} / ${total}`;
+  elements.exportProgressText.textContent = `正在生成画布 ${current} / ${total}`;
   elements.exportProgressBar.style.width = `${percentage}%`;
 }
 
-async function exportTar() {
+async function exportProjections() {
   if (state.exporting || state.characters.length === 0) return;
   state.exporting = true;
   elements.exportButton.disabled = true;
@@ -291,7 +291,7 @@ async function exportTar() {
   setExportProgress(0, state.characters.length);
 
   try {
-    const entries = [];
+    const formData = new FormData();
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = CANVAS_SIZE;
     exportCanvas.height = CANVAS_SIZE;
@@ -299,29 +299,42 @@ async function exportTar() {
     for (let index = 0; index < state.characters.length; index += 1) {
       drawGlyph(exportCanvas, state.characters[index]);
       const blob = await canvasToBlob(exportCanvas);
-      entries.push({
-        name: state.fileNames[index],
-        data: new Uint8Array(await blob.arrayBuffer()),
-      });
+      formData.append("files", blob, state.fileNames[index]);
       setExportProgress(index + 1, state.characters.length);
       if ((index + 1) % 24 === 0) {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       }
     }
 
-    elements.exportProgressText.textContent = "正在打包 TAR…";
-    const tar = createTar(entries);
-    const url = URL.createObjectURL(new Blob([tar], { type: "application/x-tar" }));
+    elements.exportProgressText.textContent = "本地服务正在转换投影…";
+    const response = await fetch("/api/export-litematics", {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) {
+      let message = `投影服务返回 HTTP ${response.status}`;
+      try {
+        const body = await response.json();
+        if (body.detail) message = body.detail;
+      } catch {
+        // Keep the HTTP status fallback when the response is not JSON.
+      }
+      throw new Error(message);
+    }
+
+    elements.exportProgressText.textContent = "正在下载投影 TAR…";
+    const archive = await response.blob();
+    const url = URL.createObjectURL(archive);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `字形图片_${formatTimestamp(new Date())}.tar`;
+    anchor.download = `字符投影_${formatTimestamp(new Date())}.tar`;
     document.body.append(anchor);
     anchor.click();
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
-    showToast(`已导出 ${entries.length} 张 PNG 图片。`);
+    showToast(`已导出 ${state.characters.length} 份 Litematica 投影。`);
   } catch (error) {
-    showToast("导出失败，请重试或减少字符数量。");
+    showToast(`导出失败：${error.message}`);
     console.error(error);
   } finally {
     state.exporting = false;
@@ -356,7 +369,7 @@ elements.resetStyle.addEventListener("click", () => {
 
 elements.textFile.addEventListener("change", handleTextUpload);
 elements.fontFile.addEventListener("change", handleFontUpload);
-elements.exportButton.addEventListener("click", exportTar);
+elements.exportButton.addEventListener("click", exportProjections);
 
 window.addEventListener("beforeunload", () => {
   if (state.fontObjectUrl) URL.revokeObjectURL(state.fontObjectUrl);

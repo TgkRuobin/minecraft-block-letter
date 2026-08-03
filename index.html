@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#f4f1ea" />
     <meta
       name="description"
-      content="将字符表按统一字形样式渲染为 128×128 PNG，并批量导出 TAR。"
+      content="将字符表渲染为 128×128 单层黑石 Litematica 投影，并批量导出 TAR。"
     />
-    <title>字格 · 字形图片导出器</title>
+    <title>字格 · 字符投影导出器</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -23,9 +23,9 @@
         </a>
 
         <div class="topbar-meta" aria-label="当前项目状态">
-          <span><i class="status-dot" aria-hidden="true"></i>本地处理</span>
-          <span>128 × 128 PNG</span>
-          <span>黑字 / 白底</span>
+          <span><i class="status-dot" aria-hidden="true"></i>本地服务</span>
+          <span>128 × 1 × 128</span>
+          <span>黑石 / 空气</span>
         </div>
       </header>
 
@@ -143,15 +143,15 @@
             </div>
           </section>
 
-          <section class="locked-colors" aria-label="固定颜色">
+          <section class="locked-colors" aria-label="固定投影阈值">
             <div>
               <span class="color-chip color-chip-black"></span>
-              <span><strong>#000000</strong><small>文字颜色</small></span>
+              <span><strong>≤ 123</strong><small>黑石方块</small></span>
             </div>
-            <span class="lock-mark" aria-hidden="true">锁定</span>
+            <span class="lock-mark" aria-hidden="true">阈值</span>
             <div>
               <span class="color-chip color-chip-white"></span>
-              <span><strong>#FFFFFF</strong><small>画布颜色</small></span>
+              <span><strong>&gt; 123</strong><small>空气方块</small></span>
             </div>
           </section>
         </aside>
@@ -174,14 +174,14 @@
             <p>请上传 UTF-8 文本文件；换行与制表符会被自动忽略。</p>
           </div>
 
-          <div id="glyph-grid" class="glyph-grid" aria-label="字符图片预览"></div>
+          <div id="glyph-grid" class="glyph-grid" aria-label="字符投影预览"></div>
 
           <footer class="export-bar">
             <div class="export-summary">
               <span class="summary-icon" aria-hidden="true">TAR</span>
               <span>
                 <strong id="export-summary-title">等待字符载入</strong>
-                <small id="export-summary-detail">每张图片均为 128 × 128 PNG</small>
+                <small id="export-summary-detail">每份投影均为单层 128 × 128 区域</small>
               </span>
             </div>
             <div class="export-actions">
@@ -190,7 +190,7 @@
                 <span class="progress-track"><i id="export-progress-bar"></i></span>
               </div>
               <button id="export-button" class="export-button" type="button" disabled>
-                <span>导出全部图片</span>
+                <span>导出全部投影</span>
                 <small>.tar</small>
                 <i aria-hidden="true">↓</i>
               </button>

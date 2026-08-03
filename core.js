@@ -143,64 +143,6 @@ export function buildFileNames(characters) {
     usedNames.set(normalized, useCount + 1);
     const suffix = useCount === 0 ? "" : `_${codePointLabel(character)}`;
 
-    return `${stem}${suffix}.png`;
+    return `${stem}${suffix}.litematic`;
   });
-}
-
-function writeUtf8(target, offset, length, value) {
-  const bytes = new TextEncoder().encode(value);
-  target.set(bytes.slice(0, length), offset);
-}
-
-function writeOctal(target, offset, length, value) {
-  const octal = Math.max(0, value).toString(8).padStart(length - 1, "0").slice(-(length - 1));
-  writeUtf8(target, offset, length, `${octal}\0`);
-}
-
-function createTarHeader(name, size, modifiedTime) {
-  const header = new Uint8Array(512);
-  writeUtf8(header, 0, 100, name);
-  writeOctal(header, 100, 8, 0o644);
-  writeOctal(header, 108, 8, 0);
-  writeOctal(header, 116, 8, 0);
-  writeOctal(header, 124, 12, size);
-  writeOctal(header, 136, 12, Math.floor(modifiedTime / 1000));
-
-  for (let index = 148; index < 156; index += 1) {
-    header[index] = 0x20;
-  }
-
-  header[156] = "0".charCodeAt(0);
-  writeUtf8(header, 257, 6, "ustar\0");
-  writeUtf8(header, 263, 2, "00");
-  writeUtf8(header, 265, 32, "local");
-  writeUtf8(header, 297, 32, "local");
-
-  const checksum = header.reduce((sum, byte) => sum + byte, 0);
-  const checksumText = checksum.toString(8).padStart(6, "0").slice(-6);
-  writeUtf8(header, 148, 8, `${checksumText}\0 `);
-  return header;
-}
-
-export function createTar(entries, modifiedTime = Date.now()) {
-  const chunks = [];
-  let totalSize = 1024;
-
-  for (const entry of entries) {
-    const data = entry.data instanceof Uint8Array ? entry.data : new Uint8Array(entry.data);
-    const paddingSize = (512 - (data.byteLength % 512)) % 512;
-    chunks.push(createTarHeader(entry.name, data.byteLength, modifiedTime), data);
-    if (paddingSize) chunks.push(new Uint8Array(paddingSize));
-    totalSize += 512 + data.byteLength + paddingSize;
-  }
-
-  chunks.push(new Uint8Array(1024));
-  const tar = new Uint8Array(totalSize);
-  let offset = 0;
-  for (const chunk of chunks) {
-    tar.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return tar;
 }
