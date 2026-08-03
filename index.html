@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f1ea" />
+    <meta
+      name="description"
+      content="将字符表按统一字形样式渲染为 128×128 PNG，并批量导出 TAR。"
+    />
+    <title>字格 · 字形图片导出器</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="字格首页">
+          <span class="brand-mark" aria-hidden="true">字</span>
+          <span>
+            <strong>字格</strong>
+            <small>GLYPH SHEET</small>
+          </span>
+        </a>
+
+        <div class="topbar-meta" aria-label="当前项目状态">
+          <span><i class="status-dot" aria-hidden="true"></i>本地处理</span>
+          <span>128 × 128 PNG</span>
+          <span>黑字 / 白底</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="control-panel" aria-label="字形控制区">
+          <div class="panel-intro">
+            <p class="eyebrow">CONTROL DESK</p>
+            <h1>统一字形设置</h1>
+            <p>所有字符共享同一套参数。上传字体并微调后，即可打包导出。</p>
+          </div>
+
+          <section class="control-section" aria-labelledby="source-title">
+            <div class="section-heading">
+              <span class="section-index">01</span>
+              <h2 id="source-title">源文件</h2>
+            </div>
+
+            <label class="upload-box" for="text-file">
+              <span class="upload-icon" aria-hidden="true">文</span>
+              <span class="upload-copy">
+                <strong id="text-file-name">all.txt</strong>
+                <small id="text-file-status">正在读取根目录字符表…</small>
+              </span>
+              <span class="upload-action">更换</span>
+              <input id="text-file" type="file" accept=".txt,text/plain" />
+            </label>
+
+            <label class="upload-box" for="font-file">
+              <span class="upload-icon upload-icon-dark" aria-hidden="true">Aa</span>
+              <span class="upload-copy">
+                <strong id="font-file-name">系统默认字体</strong>
+                <small id="font-file-status">上传 TTF / OTF 以替换</small>
+              </span>
+              <span class="upload-action">上传</span>
+              <input id="font-file" type="file" accept=".ttf,.otf,font/ttf,font/otf" />
+            </label>
+          </section>
+
+          <section class="control-section" aria-labelledby="style-title">
+            <div class="section-heading">
+              <span class="section-index">02</span>
+              <h2 id="style-title">字形样式</h2>
+              <button id="reset-style" class="text-button" type="button">恢复默认</button>
+            </div>
+
+            <div class="range-control">
+              <div class="control-label">
+                <label for="font-size">字号</label>
+                <output id="font-size-output" for="font-size">88 px</output>
+              </div>
+              <input id="font-size" type="range" min="16" max="120" value="88" />
+            </div>
+
+            <div class="range-control">
+              <div class="control-label">
+                <label for="font-weight">字重</label>
+                <output id="font-weight-output" for="font-weight">400</output>
+              </div>
+              <input id="font-weight" type="range" min="100" max="900" step="100" value="400" />
+            </div>
+
+            <div class="range-control">
+              <div class="control-label">
+                <label for="boldness">加粗描边</label>
+                <output id="boldness-output" for="boldness">0 px</output>
+              </div>
+              <input id="boldness" type="range" min="0" max="8" step="0.5" value="0" />
+            </div>
+
+            <label class="toggle-row" for="italic">
+              <span>
+                <strong>斜体</strong>
+                <small>向右倾斜 12°</small>
+              </span>
+              <input id="italic" type="checkbox" />
+              <span class="toggle" aria-hidden="true"></span>
+            </label>
+          </section>
+
+          <section class="control-section" aria-labelledby="layout-title">
+            <div class="section-heading">
+              <span class="section-index">03</span>
+              <h2 id="layout-title">比例与位置</h2>
+            </div>
+
+            <div class="paired-controls">
+              <div class="range-control compact">
+                <div class="control-label">
+                  <label for="scale-x">水平比例</label>
+                  <output id="scale-x-output" for="scale-x">100%</output>
+                </div>
+                <input id="scale-x" type="range" min="50" max="150" value="100" />
+              </div>
+              <div class="range-control compact">
+                <div class="control-label">
+                  <label for="scale-y">垂直比例</label>
+                  <output id="scale-y-output" for="scale-y">100%</output>
+                </div>
+                <input id="scale-y" type="range" min="50" max="150" value="100" />
+              </div>
+              <div class="range-control compact">
+                <div class="control-label">
+                  <label for="offset-x">水平偏移</label>
+                  <output id="offset-x-output" for="offset-x">0 px</output>
+                </div>
+                <input id="offset-x" type="range" min="-32" max="32" value="0" />
+              </div>
+              <div class="range-control compact">
+                <div class="control-label">
+                  <label for="offset-y">垂直偏移</label>
+                  <output id="offset-y-output" for="offset-y">0 px</output>
+                </div>
+                <input id="offset-y" type="range" min="-32" max="32" value="0" />
+              </div>
+            </div>
+          </section>
+
+          <section class="locked-colors" aria-label="固定颜色">
+            <div>
+              <span class="color-chip color-chip-black"></span>
+              <span><strong>#000000</strong><small>文字颜色</small></span>
+            </div>
+            <span class="lock-mark" aria-hidden="true">锁定</span>
+            <div>
+              <span class="color-chip color-chip-white"></span>
+              <span><strong>#FFFFFF</strong><small>画布颜色</small></span>
+            </div>
+          </section>
+        </aside>
+
+        <section class="preview-panel" aria-labelledby="preview-title">
+          <div class="preview-header">
+            <div>
+              <p class="eyebrow">LIVE CONTACT SHEET</p>
+              <h2 id="preview-title">字符预览</h2>
+            </div>
+            <div class="preview-stats" aria-live="polite">
+              <span id="character-count">0 个字符</span>
+              <span id="duplicate-count">已去重 0 个</span>
+            </div>
+          </div>
+
+          <div id="empty-state" class="empty-state" hidden>
+            <span aria-hidden="true">空</span>
+            <h3>没有可绘制的字符</h3>
+            <p>请上传 UTF-8 文本文件；换行与制表符会被自动忽略。</p>
+          </div>
+
+          <div id="glyph-grid" class="glyph-grid" aria-label="字符图片预览"></div>
+
+          <footer class="export-bar">
+            <div class="export-summary">
+              <span class="summary-icon" aria-hidden="true">TAR</span>
+              <span>
+                <strong id="export-summary-title">等待字符载入</strong>
+                <small id="export-summary-detail">每张图片均为 128 × 128 PNG</small>
+              </span>
+            </div>
+            <div class="export-actions">
+              <div id="export-progress" class="export-progress" hidden>
+                <span id="export-progress-text">准备导出…</span>
+                <span class="progress-track"><i id="export-progress-bar"></i></span>
+              </div>
+              <button id="export-button" class="export-button" type="button" disabled>
+                <span>导出全部图片</span>
+                <small>.tar</small>
+                <i aria-hidden="true">↓</i>
+              </button>
+            </div>
+          </footer>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
