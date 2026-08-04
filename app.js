@@ -306,7 +306,7 @@ async function exportProjections() {
       }
     }
 
-    elements.exportProgressText.textContent = "本地服务正在转换投影…";
+    elements.exportProgressText.textContent = "本地服务正在排序并转换投影…";
     const response = await fetch("/api/export-litematics", {
       method: "POST",
       body: formData,
@@ -332,7 +332,7 @@ async function exportProjections() {
     anchor.click();
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
-    showToast(`已导出 ${state.characters.length} 份 Litematica 投影。`);
+    showToast(`已按建造成本排序导出 ${state.characters.length} 份投影。`);
   } catch (error) {
     showToast(`导出失败：${error.message}`);
     console.error(error);
